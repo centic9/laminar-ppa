@@ -1,0 +1,33 @@
+From: Dmitry Bogatov <KAction@debian.org>
+Date: Wed, 3 Apr 2019 23:57:27 +0000
+Subject: Patch build system to use JS libraries from Debian packages
+
+This fixed version of patch is contributed by upstream author, Oliver
+Giles.
+---
+ CMakeLists.txt | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index cf73a1b..a80d725 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -83,12 +83,12 @@ add_custom_command(OUTPUT index_html_size.h
+     DEPENDS src/resources/index.html)
+ 
+ # Download 3rd-party frontend JS libs...
+-file(DOWNLOAD https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js
+-	js/vue.min.js EXPECTED_MD5 fb192338844efe86ec759a40152fcb8e)
+-file(DOWNLOAD https://raw.githubusercontent.com/drudru/ansi_up/v4.0.4/ansi_up.js
+-        js/ansi_up.js EXPECTED_MD5 b31968e1a8fed0fa82305e978161f7f5)
+-file(DOWNLOAD https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js
+-        js/Chart.min.js EXPECTED_MD5 f6c8efa65711e0cbbc99ba72997ecd0e)
++file(DOWNLOAD file:///usr/share/javascript/vue/vue.min.js
++              js/vue.min.js)
++file(DOWNLOAD file:///usr/share/javascript/ansi_up/ansi_up.min.js
++              js/ansi_up.js)
++file(DOWNLOAD file:///usr/share/javascript/chart.js/Chart.min.js
++              js/Chart.min.js)
+ # ...and compile them
+ generate_compressed_bins(${CMAKE_BINARY_DIR} js/vue.min.js
+     js/ansi_up.js js/Chart.min.js)

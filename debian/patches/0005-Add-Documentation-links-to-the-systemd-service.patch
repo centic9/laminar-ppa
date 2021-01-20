@@ -1,0 +1,25 @@
+From b086a694c3df197d48e25d41a689d866dffd4040 Mon Sep 17 00:00:00 2001
+From: Ruben Pollan <meskio@sindominio.net>
+Date: Tue, 8 Dec 2020 11:40:56 +0100
+Subject: [PATCH] Add Documentation links to the systemd service
+
+---
+ etc/laminar.service.in | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/etc/laminar.service.in b/etc/laminar.service.in
+index c2ebd01..ff359b0 100644
+--- a/etc/laminar.service.in
++++ b/etc/laminar.service.in
+@@ -1,6 +1,8 @@
+ [Unit]
+ Description=Laminar continuous integration service
+ After=network.target
++Documentation=man:laminard(8)
++Documentation=https://laminar.ohwg.net/docs.html
+ 
+ [Service]
+ User=laminar
+-- 
+2.29.2
+

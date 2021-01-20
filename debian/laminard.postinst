@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+#DEBHELPER#
+
+# This code must be after debhelper token, since it uses "laminar" system user.
+for f in jobs contexts scripts
+do
+	mkdir -p /var/lib/laminar/cfg/$f
+done
+chown laminar:laminar /var/lib/laminar

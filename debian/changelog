@@ -1,0 +1,19 @@
+laminar (1.0-3) unstable; urgency=medium
+
+  * Depend on libboost-dev instead of a concrete version, so it will build
+    with the one existing on debian.
+
+ -- Ruben Pollan <meskio@sindominio.net>  Wed, 20 Jan 2021 12:02:43 +0100
+
+laminar (1.0-2) unstable; urgency=medium
+
+  * Remove libjs-vue-router dependency.
+  * Upload to unstable.
+
+ -- Ruben Pollan <meskio@sindominio.net>  Mon, 18 Jan 2021 13:42:20 +0100
+
+laminar (1.0-1) experimental; urgency=medium
+
+  * Initial release (Closes: #919181)
+
+ -- Ruben Pollan <meskio@sindominio.net>  Mon, 7 Dec 2020 18:01:29 +0000

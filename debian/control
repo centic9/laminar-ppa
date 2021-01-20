@@ -1,0 +1,71 @@
+Source: laminar
+Section: devel
+Priority: optional
+Maintainer: Ruben Pollan <meskio@sindominio.net>
+Build-Depends:
+ capnproto (>= 0.7.0~),
+ debhelper-compat (= 13),
+ libboost-dev,
+ zlib1g-dev,
+ libcapnp-dev (>= 0.7.0~),
+ rapidjson-dev,
+ bash-completion,
+ cmake,
+ dh-sysuser,
+ libjs-vue,
+ libjs-chart.js,
+ libjs-ansi-up,
+ libsqlite3-dev,
+Standards-Version: 4.5.1
+Rules-Requires-Root: no
+Homepage: https://laminar.ohwg.net
+Vcs-Browser: https://salsa.debian.org/meskio-guest/laminar/
+Vcs-Git: https://salsa.debian.org/meskio-guest/laminar.git
+
+Package: laminar
+Architecture: all
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+ laminarc,
+ laminard
+Description: lightweight and modular continuous integration service (metapackage)
+ The Laminar is a system to automate the compile/test cycle required
+ by most software projects to validate code changes. By automatically
+ rebuilding and testing the tree each time something has changed,
+ build problems are pinpointed quickly, before other developers are
+ inconvenienced by the failure.
+ .
+ This is metapackage, depending both on the laminar server and client.
+
+Package: laminarc
+Architecture: any
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: lightweight and modular continuous integration service (client)
+ The Laminar is a system to automate the compile/test cycle required
+ by most software projects to validate code changes. By automatically
+ rebuilding and testing the tree each time something has changed,
+ build problems are pinpointed quickly, before other developers are
+ inconvenienced by the failure.
+ .
+ This package contains client programs to control the laminar server.
+
+Package: laminard
+Architecture: any
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Pre-Depends:
+ ${misc:Pre-Depends}
+Recommends:
+ daemon,
+Description: lightweight and modular continuous integration service (server)
+ The Laminar is a system to automate the compile/test cycle required
+ by most software projects to validate code changes. By automatically
+ rebuilding and testing the tree each time something has changed,
+ build problems are pinpointed quickly, before other developers are
+ inconvenienced by the failure.
+ .
+ This package contains the laminar server.

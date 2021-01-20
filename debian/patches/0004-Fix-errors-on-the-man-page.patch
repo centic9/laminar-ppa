@@ -1,0 +1,34 @@
+From ce627e19c2226fbe48fb1afc7c2d75f74425208c Mon Sep 17 00:00:00 2001
+From: Ruben Pollan <meskio@sindominio.net>
+Date: Tue, 8 Dec 2020 11:18:46 +0100
+Subject: [PATCH] Fix errors on the man page
+
+---
+ etc/laminarc.1 | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/etc/laminarc.1 b/etc/laminarc.1
+index 196977a..9b53288 100644
+--- a/etc/laminarc.1
++++ b/etc/laminarc.1
+@@ -47,14 +47,14 @@ The laminar server to connect to is read from the
+ environment variable. If empty, it falls back to
+ .Ev LAMINAR_BIND_RPC
+ and finally defaults to
+-.Ad
+-unix-abstract:laminar.
++.Ad unix-abstract:laminar
+ .Sh ENVIRONMENT
+ .Bl -tag
+ .It Ev LAMINAR_HOST
+ address of server to connect. May be of the form
+ .Ad IP:PORT,
+-.Ad unix:PATH/TO/SOCKET or
++.Ad unix:PATH/TO/SOCKET
++or
+ .Ad unix-abstract:NAME
+ .It Ev LAMINAR_BIND_RPC
+ fallback server address variable. It is set by
+-- 
+2.29.2
+

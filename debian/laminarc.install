@@ -1,0 +1,4 @@
+usr/bin/laminarc
+usr/share/man/man1/laminarc.1.gz
+usr/share/bash-completion/completions/laminarc
+usr/share/zsh/site-functions/_laminarc

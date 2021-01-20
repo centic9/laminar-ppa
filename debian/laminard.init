@@ -1,0 +1,37 @@
+#!/usr/bin/env /lib/init/init-d-script
+### BEGIN INIT INFO
+# Provides:          laminar
+# Should-Start:      $syslog
+# Required-Start:    $time $local_fs
+# Required-Stop:     $time $local_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: laminar continuous integration system
+### END INIT INFO
+NAME='laminar'
+DESC='laminar continuous integration system'
+DAEMON=/usr/sbin/laminard
+
+daemon_ () {
+	/usr/bin/daemon                 \
+	  --noconfig                    \
+	  --name "${NAME}"              \
+	  --user laminar                \
+	  --stdout /var/log/laminar.log \
+	  --stderr /var/log/laminar.log \
+	  "$@"
+}
+if ! test -x '/usr/bin/daemon' ; then
+	log_failure_msg "install \`daemon' package to use ${NAME} script"
+	exit 1
+fi
+
+do_start_cmd_override () {
+	daemon_ -- "${DAEMON}" -v
+}
+
+do_stop_cmd_override () {
+	if daemon_ --running ; then
+		daemon_ --stop
+	fi
+}

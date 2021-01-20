@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+
+# enable hardening
+# https://lintian.debian.org/tags/hardening-no-bindnow.html
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+include /usr/share/dpkg/pkg-info.mk
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DLAMINAR_VERSION=$(DEB_VERSION_UPSTREAM)
+
+%:
+	dh $@ --with sysuser,bash-completion --remove-d

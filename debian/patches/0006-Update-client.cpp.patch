@@ -1,0 +1,26 @@
+From e84e61e5bde25873390236ef1a9d37c141244cc7 Mon Sep 17 00:00:00 2001
+From: Alex Myczko <alex@aiei.ch>
+Date: Tue, 8 Dec 2020 08:40:16 +0100
+Subject: [PATCH] Update client.cpp
+
+fix typo
+---
+ src/client.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/client.cpp b/src/client.cpp
+index 701dc7c..2e92747 100644
+--- a/src/client.cpp
++++ b/src/client.cpp
+@@ -94,7 +94,7 @@ static void usage(std::ostream& out) {
+     out << "  start JOB_LIST...     queues one or more jobs for execution and blocks until it starts.\n";
+     out << "  run JOB_LIST...       queues one or more jobs for execution and blocks until it finishes.\n";
+     out << "  set PARAMETER_LIST... sets the given parameters as environment variables in the currently\n";
+-    out << "                        runing job. Fails if run outside of a job context.\n";
++    out << "                        running job. Fails if run outside of a job context.\n";
+     out << "  abort NAME NUMBER     aborts the run identified by NAME and NUMBER.\n";
+     out << "  show-jobs             lists all known jobs.\n";
+     out << "  show-queued           lists currently queued jobs.\n";
+-- 
+2.29.2
+

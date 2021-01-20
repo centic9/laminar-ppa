@@ -1,0 +1,4 @@
+usr/sbin/laminard
+usr/share/man/man8/laminard.8.gz
+lib/systemd/system/laminar.service
+debian/tmp/etc/laminar.conf
