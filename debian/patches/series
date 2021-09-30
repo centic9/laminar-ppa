@@ -1,7 +1,1 @@
-0000-Remove-dependency-on-vue-router.patch
-0001-Remove-vue-router-in-the-build-process.patch
-0002-Move-ansi-up-to-latest-version.patch
-0003-Patch-build-system-to-use-JS-libraries-from-Debian-p.patch
-0004-Fix-errors-on-the-man-page.patch
-0005-Add-Documentation-links-to-the-systemd-service.patch
-0006-Update-client.cpp.patch
+0000-Patch-build-system-to-use-JS-libraries-from-Debian-p.patch

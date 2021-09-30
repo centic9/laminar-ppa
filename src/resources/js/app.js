@@ -18,86 +18,6 @@ Vue.filter('iecFileSize', bytes => {
     ['B', 'KiB', 'MiB', 'GiB', 'TiB'][exp];
 });
 
-// Mixin handling retrieving dynamic updates from the backend
-Vue.mixin((() => {
-  const setupEventSource = (to, query, next, comp) => {
-    const es = new EventSource(document.head.baseURI + to.path.substr(1) + query);
-    es.comp = comp; // When reconnecting, we already have a component. Usually this will be null.
-    es.to = to; // Save a ref, needed for adding query params for pagination.
-    es.onmessage = function(msg) {
-      msg = JSON.parse(msg.data);
-      // "status" is the first message the server always delivers.
-      // Use this to confirm the navigation. The component is not
-      // created until next() is called, so creating a reference
-      // for other message types must be deferred. There are some extra
-      // subtle checks here. If this eventsource already has a component,
-      // then this is not the first time the status message has been
-      // received. If the frontend requests an update, the status message
-      // should not be handled here, but treated the same as any other
-      // message. An exception is if the connection has been lost - in
-      // that case we should treat this as a "first-time" status message.
-      // !this.comp.es is used to test this condition.
-      if (msg.type === 'status' && (!this.comp || !this.comp.es)) {
-        next(comp => {
-          // Set up bidirectional reference
-          // 1. needed to reference the component for other msg types
-          this.comp = comp;
-          // 2. needed to close the ws on navigation away
-          comp.es = this;
-          comp.esReconnectInterval = 500;
-          // Update html and nav titles
-          document.title = comp.$root.title = msg.title;
-          comp.$root.version = msg.version;
-          // Calculate clock offset (used by ProgressUpdater)
-          comp.$root.clockSkew = msg.time - Math.floor((new Date()).getTime()/1000);
-          comp.$root.connected = true;
-          // Component-specific callback handler
-          comp[msg.type](msg.data, to.params);
-        });
-      } else {
-        // at this point, the component must be defined
-        if (!this.comp)
-          return console.error("Page component was undefined");
-        else {
-          this.comp.$root.connected = true;
-          this.comp.$root.showNotify(msg.type, msg.data);
-          if(typeof this.comp[msg.type] === 'function')
-            this.comp[msg.type](msg.data);
-        }
-      }
-    }
-    es.onerror = function(e) {
-      this.comp.$root.connected = false;
-      setTimeout(() => {
-        // Recrate the EventSource, passing in the existing component
-        this.comp.es = setupEventSource(to, query, null, this.comp);
-      }, this.comp.esReconnectInterval);
-      if(this.comp.esReconnectInterval < 7500)
-        this.comp.esReconnectInterval *= 1.5;
-      this.close();
-    }
-    return es;
-  }
-  return {
-    beforeRouteEnter(to, from, next) {
-      setupEventSource(to, '', (fn) => { next(fn); });
-    },
-    beforeRouteUpdate(to, from, next) {
-      this.es.close();
-      setupEventSource(to, '', (fn) => { fn(this); next(); });
-    },
-    beforeRouteLeave(to, from, next) {
-      this.es.close();
-      next();
-    },
-    methods: {
-      query(q) {
-        this.es.close();
-        setupEventSource(this.es.to, '?' + Object.entries(q).map(([k,v])=>`${k}=${v}`).join('&'), fn => fn(this));
-      }
-    }
-  };
-})());
 
 // Mixin for periodically updating a progress bar
 Vue.mixin({
@@ -170,9 +90,9 @@ Vue.mixin({
       let m = d.getMinutes();
       if (m < 10)
         m = '0' + m;
-      return d.getHours() + ':' + m + ' on ' + 
+      return d.getHours() + ':' + m + ' on ' +
         ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()] + ' ' + d.getDate() + '. ' +
-        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()] + ' ' + 
+        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()] + ' ' +
         d.getFullYear();
     },
     // Pretty-print a duration
@@ -283,15 +203,19 @@ const Charts = (() => {
           if (c.data.labels[j] == name) {
             c.data.datasets[0].data[j]++;
             c.update();
-            break;
+            return;
           }
         }
+        // if we get here, it's a new/unknown job
+        c.data.labels.push(name);
+        c.data.datasets[0].data.push(1);
+        c.update();
       }
       return c;
     },
-    createTimePerJobChart: (id, data) => {
+    createTimePerJobChart: (id, data, completedCounts) => {
       const scale = timeScale(Math.max(...Object.values(data)));
-      return new Chart(document.getElementById(id), {
+      const c = new Chart(document.getElementById(id), {
         type: 'horizontalBar',
         data: {
           labels: Object.keys(data),
@@ -312,23 +236,38 @@ const Charts = (() => {
             }
           }]},
           tooltips:{callbacks:{
-            label: (tip, data) => data.datasets[tip.datasetIndex].label + ': ' + tip.xLabel + ' ' + scale.label.toLowerCase()
+            label: (tip, data) => data.datasets[tip.datasetIndex].label + ': ' + tip.xLabel.toFixed(2) + ' ' + scale.label.toLowerCase()
           }}
         }
       });
+      c.jobCompleted = (name, time) => {
+        for (var j = 0; j < c.data.datasets[0].data.length; ++j) {
+          if (c.data.labels[j] == name) {
+            c.data.datasets[0].data[j] = ((completedCounts[name]-1) * c.data.datasets[0].data[j] + time * scale.factor) / completedCounts[name];
+            c.update();
+            return;
+          }
+        }
+        // if we get here, it's a new/unknown job
+        c.data.labels.push(name);
+        c.data.datasets[0].data.push(time * scale.factor);
+        c.update();
+      };
+      return c;
     },
     createRunTimeChangesChart: (id, data) => {
       const scale = timeScale(Math.max(...data.map(e => Math.max(...e.durations))));
-      return new Chart(document.getElementById(id), {
+      const dataValue = (name, durations) => ({
+        label: name,
+        data: durations.map(x => x * scale.factor),
+        borderColor: 'hsl('+(name.hashCode() % 360)+', 27%, 57%)',
+        backgroundColor: 'transparent'
+      });
+      const c = new Chart(document.getElementById(id), {
         type: 'line',
         data: {
           labels: [...Array(10).keys()],
-          datasets: data.map(e => ({
-            label: e.name,
-            data: e.durations.map(x => x * scale.factor),
-            borderColor: 'hsl('+(e.name.hashCode() % 360)+', 27%, 57%)',
-            backgroundColor: 'transparent'
-          }))
+          datasets: data.map(e => dataValue(e.name, e.durations))
         },
         options:{
           title: { display: true, text: 'Run time changes' },
@@ -348,10 +287,25 @@ const Charts = (() => {
           }
         }
       });
+      c.jobCompleted = (name, time) => {
+        for (var j = 0; j < c.data.datasets.length; ++j) {
+          if (c.data.datasets[j].label == name) {
+            if(c.data.datasets[j].data.length == 10)
+              c.data.datasets[j].data.shift();
+            c.data.datasets[j].data.push(time * scale.factor);
+            c.update();
+            return;
+          }
+        }
+        // if we get here, it's a new/unknown job
+        c.data.datasets.push(dataValue(name, [time]));
+        c.update();
+      };
+      return c;
     },
     createRunTimeChart: (id, jobs, avg) => {
       const scale = timeScale(Math.max(...jobs.map(v=>v.completed-v.started)));
-      return new Chart(document.getElementById(id), {
+      const c = new Chart(document.getElementById(id), {
         type: 'bar',
         data: {
           labels: jobs.map(e => '#' + e.number).reverse(),
@@ -399,6 +353,22 @@ const Charts = (() => {
           }}
         }
       });
+      c.jobCompleted = (num, result, time) => {
+        let avg = c.data.datasets[0].data[0].y / scale.factor;
+        avg = ((avg * (num - 1)) + time) / num;
+        c.data.datasets[0].data[0].y = avg * scale.factor;
+        c.data.datasets[0].data[1].y = avg * scale.factor;
+        if(c.data.datasets[1].data.length == 20) {
+          c.data.labels.shift();
+          c.data.datasets[1].data.shift();
+          c.data.datasets[1].backgroundColor.shift();
+        }
+        c.data.labels.push('#' + num);
+        c.data.datasets[1].data.push(time * scale.factor);
+        c.data.datasets[1].backgroundColor.push(result == 'success' ? '#74af77': '#883d3d');
+        c.update();
+      };
+      return c;
     }
   };
 })();
@@ -421,6 +391,7 @@ const Home = templateId => {
     lowPassRates: [],
   };
   let chtUtilization, chtBuildsPerDay, chtBuildsPerJob, chtTimePerJob;
+  let completedCounts;
   return {
     template: templateId,
     data: () => state,
@@ -431,6 +402,7 @@ const Home = templateId => {
         state.jobsRecent = msg.recent;
         state.resultChanged = msg.resultChanged;
         state.lowPassRates = msg.lowPassRates;
+        completedCounts = msg.completedCounts;
         this.$forceUpdate();
 
         // defer charts to nextTick because they get DOM elements which aren't rendered yet
@@ -438,7 +410,7 @@ const Home = templateId => {
           chtUtilization = Charts.createExecutorUtilizationChart("chartUtil", msg.executorsBusy, msg.executorsTotal);
           chtBuildsPerDay = Charts.createRunsPerDayChart("chartBpd", msg.buildsPerDay);
           chtBuildsPerJob = Charts.createRunsPerJobChart("chartBpj", msg.buildsPerJob);
-          chtTimePerJob = Charts.createTimePerJobChart("chartTpj", msg.timePerJob);
+          chtTimePerJob = Charts.createTimePerJobChart("chartTpj", msg.timePerJob, completedCounts);
           chtBuildTimeChanges = Charts.createRunTimeChangesChart("chartBuildTimeChanges", msg.buildTimeChanges);
         });
       },
@@ -453,8 +425,10 @@ const Home = templateId => {
         chtUtilization.executorBusyChanged(true);
       },
       job_completed: function(data) {
-        for (var i = 0; i < state.jobsRunning.length; ++i) {
-          var job = state.jobsRunning[i];
+        if(!(job.name in completedCounts))
+          completedCounts[job.name] = 0;
+        for(let i = 0; i < state.jobsRunning.length; ++i) {
+          const job = state.jobsRunning[i];
           if (job.name == data.name && job.number == data.number) {
             state.jobsRunning.splice(i, 1);
             state.jobsRecent.splice(0, 0, data);
@@ -462,9 +436,28 @@ const Home = templateId => {
             break;
           }
         }
+        for(let i = 0; i < state.resultChanged.length; ++i) {
+          const job = state.resultChanged[i];
+          if(job.name == data.name) {
+            job[data.result === 'success' ? 'lastSuccess' : 'lastFailure'] = data.number;
+            this.$forceUpdate();
+            break;
+          }
+        }
+        for(let i = 0; i < state.lowPassRates.length; ++i) {
+          const job = state.lowPassRates[i];
+          if(job.name == data.name) {
+            job.passRate = ((completedCounts[job.name] - 1) * job.passRate + (data.result === 'success' ? 1 : 0)) / completedCounts[job.name];
+            this.$forceUpdate();
+            break;
+          }
+        }
+        completedCounts[job.name]++;
         chtBuildsPerDay.jobCompleted(data.result === 'success')
         chtUtilization.executorBusyChanged(false);
-        chtBuildsPerJob.jobCompleted(data.name)
+        chtBuildsPerJob.jobCompleted(data.name);
+        chtTimePerJob.jobCompleted(data.name, data.completed - data.started);
+        chtBuildTimeChanges.jobCompleted(data.name, data.completed - data.started);
       }
     }
   };
@@ -556,7 +549,7 @@ const All = templateId => {
         return ret;
       },
       wallboardLink: function() {
-        return '/wallboard' + (state.group ? '?filter=' + state.groups[state.group] : '');
+        return 'wallboard' + (state.group ? '?filter=' + state.groups[state.group] : '');
       }
     }
   };
@@ -574,9 +567,10 @@ const Job = templateId => {
     pages: 0,
     sort: {}
   };
-  let chtBt = null;
+  let chtBuildTime = null;
   return {
     template: templateId,
+    props: ['route'],
     data: () => state,
     methods: {
       status: function(msg) {
@@ -591,12 +585,12 @@ const Job = templateId => {
 
         // "status" comes again if we change page/sorting. Delete the
         // old chart and recreate it to prevent flickering of old data
-        if(chtBt)
-          chtBt.destroy();
+        if(chtBuildTime)
+          chtBuildTime.destroy();
 
         // defer chart to nextTick because they get DOM elements which aren't rendered yet
         this.$nextTick(() => {
-          chtBt = Charts.createRunTimeChart("chartBt", msg.recent, msg.averageRuntime);
+          chtBuildTime = Charts.createRunTimeChart("chartBt", msg.recent, msg.averageRuntime);
         });
       },
       job_queued: function() {
@@ -613,8 +607,8 @@ const Job = templateId => {
             state.jobsRunning.splice(i, 1);
             state.jobsRecent.splice(0, 0, data);
             this.$forceUpdate();
-            // TODO: update the chart
         }
+        chtBuildTime.jobCompleted(data.number, data.result, data.completed - data.started);
       },
       page_next: function() {
         state.sort.page++;
@@ -632,6 +626,9 @@ const Job = templateId => {
           state.sort.field = field;
         }
         this.query(state.sort)
+      },
+      query: function(q) {
+        this.$root.$emit('navigate', q);
       }
     }
   };
@@ -640,6 +637,8 @@ const Job = templateId => {
 // Component for the /job/:name/:number endpoint
 const Run = templateId => {
   const utf8decoder = new TextDecoder('utf-8');
+  const ansi_up = new AnsiUp;
+  ansi_up.use_classes = true;
   const state = {
     job: { artifacts: [], upstream: {} },
     latestNum: null,
@@ -657,9 +656,7 @@ const Run = templateId => {
           if (done)
             return;
           state.log += ansi_up.ansi_to_html(
-            value.replace(/</g,'&lt;')
-                 .replace(/>/g,'&gt;')
-                 .replace(/\033\[\{([^:]+):(\d+)\033\\/g, (m, $1, $2) =>
+            value.replace(/\033\[\{([^:]+):(\d+)\033\\/g, (m, $1, $2) =>
                    '<a href="jobs/'+$1+'" onclick="return vroute(this);">'+$1+'</a>:'+
                    '<a href="jobs/'+$1+'/'+$2+'" onclick="return vroute(this);">#'+$2+'</a>'
                  )
@@ -674,11 +671,13 @@ const Run = templateId => {
   return {
     template: templateId,
     data: () => state,
+    props: ['route'],
     methods: {
-      status: function(data, params) {
+      status: function(data) {
         // Check for the /latest endpoint
+        const params = this._props.route.params;
         if(params.number === 'latest')
-          return this.$router.replace('/jobs/' + params.name + '/' + data.latestNum);
+          return this.$router.replace('jobs/' + params.name + '/' + data.latestNum);
 
         state.number = parseInt(params.number);
         state.jobsRunning = [];
@@ -719,6 +718,113 @@ const Run = templateId => {
   };
 };
 
+Vue.component('RouterLink', {
+  name: 'router-link',
+  props: {
+    to:  { type: String },
+    tag: { type: String, default: 'a' }
+  },
+  template: `<component :is="tag" @click="navigate" :href="to"><slot></slot></component>`,
+  methods: {
+    navigate: function(e) {
+      e.preventDefault();
+      history.pushState(null, null, this.to);
+      this.$root.$emit('navigate');
+    }
+  }
+});
+
+Vue.component('RouterView', (() => {
+  const routes = [
+    { path: /^$/,                   component: Home('#home') },
+    { path: /^jobs$/,               component:  All('#jobs') },
+    { path: /^wallboard$/,          component:  All('#wallboard') },
+    { path: /^jobs\/(?<name>[^\/]+)$/,         component:  Job('#job') },
+    { path: /^jobs\/(?<name>[^\/]+)\/(?<number>\d+)$/, component:  Run('#run') }
+  ];
+
+  const resolveRoute = path => {
+    for(i in routes) {
+      const r = routes[i].path.exec(path);
+      if(r)
+        return [routes[i].component, r.groups];
+    }
+  }
+
+  let eventSource = null;
+
+  const setupEventSource = (view, query) => {
+    // drop any existing event source
+    if(eventSource)
+      eventSource.close();
+
+    const path = (location.origin+location.pathname).substr(document.head.baseURI.length);
+    const search = query ? '?' + Object.entries(query).map(([k,v])=>`${k}=${v}`).join('&') : '';
+
+    eventSource = new EventSource(document.head.baseURI + path + search);
+    eventSource.reconnectInterval = 500;
+    eventSource.onmessage = msg => {
+      msg = JSON.parse(msg.data);
+      if(msg.type === 'status') {
+        // Event source is connected. Update static data
+        document.title = view.$root.title = msg.title;
+        view.$root.version = msg.version;
+        // Calculate clock offset (used by ProgressUpdater)
+        view.$root.clockSkew = msg.time - Math.floor((new Date()).getTime()/1000);
+        view.$root.connected = true;
+        [view.currentView, route.params] = resolveRoute(path);
+        // the component won't be instantiated until nextTick
+        view.$nextTick(() => {
+          // component is ready, update it with the data from the eventsource
+          eventSource.comp = view.$children[0];
+          // and finally run the component handler
+          eventSource.comp[msg.type](msg.data);
+        });
+      } else {
+        // at this point, the component must be defined
+        if (!eventSource.comp)
+          return console.error("Page component was undefined");
+        view.$root.connected = true;
+        view.$root.showNotify(msg.type, msg.data);
+        if(typeof eventSource.comp[msg.type] === 'function')
+          eventSource.comp[msg.type](msg.data);
+      }
+    }
+    eventSource.onerror = err => {
+      let ri = eventSource.reconnectInterval;
+      view.$root.connected = false;
+      setTimeout(() => {
+        setupEventSource(view);
+        if(ri < 7500)
+          ri *= 1.5;
+        eventSource.reconnectInterval = ri
+      }, ri);
+      eventSource.close();
+    }
+  };
+
+  let route = {};
+
+  return {
+    name: 'router-view',
+    template: `<component :is="currentView" :route="route"></component>`,
+    data: () => ({
+      currentView: routes[0].component, // default to home
+      route: route
+    }),
+    created: function() {
+      this.$root.$on('navigate', query => {
+        setupEventSource(this, query);
+      });
+      window.addEventListener('popstate', () => {
+        this.$root.$emit('navigate');
+      });
+      // initial navigation
+      this.$root.$emit('navigate');
+    }
+  };
+})());
+
 new Vue({
   el: '#app',
   data: {
@@ -726,7 +832,8 @@ new Vue({
     version: '',
     clockSkew: 0,
     connected: false,
-    notify: 'localStorage' in window && localStorage.getItem('showNotifications') == 1
+    notify: 'localStorage' in window && localStorage.getItem('showNotifications') == 1,
+    route: { path: '', params: {} }
   },
   computed: {
     supportsNotifications: () =>
@@ -748,16 +855,5 @@ new Vue({
   },
   watch: {
     notify: e => localStorage.setItem('showNotifications', e ? 1 : 0)
-  },
-  router: new VueRouter({
-    mode: 'history',
-    base: document.head.baseURI.substr(location.origin.length),
-    routes: [
-      { path: '/',                   component: Home('#home') },
-      { path: '/jobs',               component:  All('#jobs') },
-      { path: '/wallboard',          component:  All('#wallboard') },
-      { path: '/jobs/:name',         component:  Job('#job') },
-      { path: '/jobs/:name/:number', component:  Run('#run') }
-    ],
-  }),
+  }
 });

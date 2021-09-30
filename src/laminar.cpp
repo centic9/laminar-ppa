@@ -203,18 +203,21 @@ std::list<std::string> Laminar::listKnownJobs() {
     return res;
 }
 
-void Laminar::populateArtifacts(Json &j, std::string job, uint num) const {
+void Laminar::populateArtifacts(Json &j, std::string job, uint num, kj::Path subdir) const {
     kj::Path runArchive{job,std::to_string(num)};
+    runArchive = runArchive.append(subdir);
     KJ_IF_MAYBE(dir, fsHome->tryOpenSubdir("archive"/runArchive)) {
         for(kj::StringPtr file : (*dir)->listNames()) {
             kj::FsNode::Metadata meta = (*dir)->lstat(kj::Path{file});
-            if(meta.type != kj::FsNode::Type::FILE)
-                continue;
-            j.StartObject();
-            j.set("url", archiveUrl + (runArchive/file).toString().cStr());
-            j.set("filename", file.cStr());
-            j.set("size", meta.size);
-            j.EndObject();
+            if(meta.type == kj::FsNode::Type::FILE) {
+                j.StartObject();
+                j.set("url", archiveUrl + (runArchive/file).toString().cStr());
+                j.set("filename", (subdir/file).toString().cStr());
+                j.set("size", meta.size);
+                j.EndObject();
+            } else if(meta.type == kj::FsNode::Type::DIRECTORY) {
+                populateArtifacts(j, job, num, subdir/file);
+            }
         }
     }
 }
@@ -361,15 +364,17 @@ std::string Laminar::getStatus(MonitorScope scope) {
         j.EndObject();
     } else { // Home page
         j.startArray("recent");
-        db->stmt("SELECT * FROM builds WHERE completedAt IS NOT NULL ORDER BY completedAt DESC LIMIT 20")
-        .fetch<str,uint,str,time_t,time_t,time_t,int>([&](str name,uint build,str context,time_t,time_t started,time_t completed,int result){
+        db->stmt("SELECT name,number,node,queuedAt,startedAt,completedAt,result,reason FROM builds WHERE completedAt IS NOT NULL ORDER BY completedAt DESC LIMIT 20")
+        .fetch<str,uint,str,time_t,time_t,time_t,int,str>([&](str name,uint build,str context,time_t queued,time_t started,time_t completed,int result,str reason){
             j.StartObject();
             j.set("name", name)
              .set("number", build)
              .set("context", context)
+             .set("queued", queued)
              .set("started", started)
              .set("completed", completed)
              .set("result", to_string(RunState(result)))
+             .set("reason", reason)
              .EndObject();
         });
         j.EndArray();
@@ -465,6 +470,12 @@ std::string Laminar::getStatus(MonitorScope scope) {
             j.EndObject();
         });
         j.EndArray();
+        j.startObject("completedCounts");
+        db->stmt("SELECT name, COUNT(*) FROM builds WHERE result IS NOT NULL GROUP BY name")
+                .fetch<str, uint>([&](str job, uint count){
+            j.set(job.c_str(), count);
+        });
+        j.EndObject();
     }
     j.EndObject();
     return j.str();
@@ -769,7 +780,14 @@ void Laminar::handleRunFinished(Run * r) {
         // anyway so hence this (admittedly debatable) optimization.
         if(!fsHome->exists(d))
             break;
-        fsHome->remove(d);
+        // must use a try/catch because remove will throw if deletion fails. Using
+        // tryRemove does not help because it still throws an exception for some
+        // errors such as EACCES
+        try {
+            fsHome->remove(d);
+        } catch(kj::Exception& e) {
+            LLOG(ERROR, "Could not remove directory", e.getDescription());
+        }
     }
 
     fsHome->symlink(kj::Path{"archive", r->name, "latest"}, std::to_string(r->build), kj::WriteMode::CREATE|kj::WriteMode::MODIFY);

@@ -4,12 +4,12 @@ Upstream-Contact: Oliver Giles <ohw.giles@gmail.com>
 Source: https://github.com/ohwgiles/laminar
 
 Files: *
-Copyright: 2015-2020 Oliver Giles <ohw.giles@gmail.com>
+Copyright: 2015-2021 Oliver Giles <ohw.giles@gmail.com>
 License: GPL-3+
 
 Files: debian/*
 Copyright: 2019 Dmitry Bogatov <KAction@debian.org>
-   2020 Ruben Pollan <meskio@sindominio.net>
+   2020-2021 Ruben Pollan <meskio@sindominio.net>
 License: GPL-3+
 
 License: GPL-3+

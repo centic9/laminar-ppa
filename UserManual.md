@@ -17,24 +17,26 @@ Throughout this document, the fixed base path `/var/lib/laminar` is used. This i
 
 # Installing Laminar
 
-Pre-built packages are available for Debian 9 (Stretch) and CentOS 7 on x86_64. Alternatively, Laminar may be built from source for any Linux distribution.
+Since Debian Bullseye, Laminar is available in [the official repositories](https://packages.debian.org/search?searchon=sourcenames&keywords=laminar).
 
-## Installation from binaries
+Alternatively, pre-built upstream packages are available for Debian 10 (Bullseye) on x86_64 and armhf, and for Rocky/CentOS/RHEL 7 and 8 on x86_64.
 
-Alternatively to the source-based approach shown above, precompiled packages are supplied for x86_64 Debian 9 (Stretch) and CentOS 7
+Finally, Laminar may be built from source for any Linux distribution.
+
+## Installation from upstream packages
 
 Under Debian:
 
 ```bash
-wget https://github.com/ohwgiles/laminar/releases/download/0.6/laminar-0.6-1-amd64.deb
-sudo apt install laminar-0.6-1-amd64.deb
+wget https://github.com/ohwgiles/laminar/releases/download/1.1/laminar_1.1-1.upstream-debian10_amd64.deb
+sudo apt install ./laminar_1.1-1.upstream-debian10_amd64.deb
 ```
 
-Under CentOS:
+Under Rocky/CentOS/RHEL:
 
 ```bash
-wget https://github.com/ohwgiles/laminar/releases/download/0.5/laminar-0.6-1.x86_64.rpm
-sudo yum install laminar-0.6-1.x86_64.rpm
+wget https://github.com/ohwgiles/laminar/releases/download/1.1/laminar-1.1.upstream_rocky8-1.x86_64.rpm
+sudo dnf install ./laminar-1.1.upstream_rocky8-1.x86_64.rpm
 ```
 
 Both install packages will create a new `laminar` user and install (but not activate) a systemd service for launching the laminar daemon.
@@ -86,7 +88,7 @@ Laminar's configuration file may be found at `/etc/laminar.conf`. Laminar will s
 
 Edit `/etc/laminar.conf` and change `LAMINAR_BIND_HTTP` to `IPADDR:PORT`, `unix:PATH/TO/SOCKET` or `unix-abstract:SOCKETNAME`. `IPADDR` may be `*` to bind on all interfaces. The default is `*:8080`.
 
-Do not attempt to run laminar on port 80. This requires running as `root`, and Laminar will not drop privileges when executing job scripts! For a more complete integrated solution (including SSL), run laminar as a reverse proxy behind a regular webserver.
+Do not attempt to run laminar on port 80. This requires running as `root`, and Laminar will not drop privileges when executing job scripts! For a more complete integrated solution (including SSL), run laminar behind a regular webserver acting as a reverse proxy.
 
 ## Running behind a reverse proxy
 
@@ -94,9 +96,11 @@ A reverse proxy is required if you want Laminar to share a port with other web s
 
 If you use [artefacts](#Archiving-artefacts), note that Laminar is not designed as a file server, and better performance will be achieved by allowing the frontend web server to serve the archive directory directly (e.g. using a `Location` directive).
 
-Laminar uses Sever Sent Events to provide a responsive, auto-updating display without polling. Most frontend webservers should handle this without any extra configuration.
+Laminar uses Server Sent Events to provide a responsive, auto-updating display without polling. Most frontend webservers should handle this without any extra configuration.
 
 If you use a reverse proxy to host Laminar at a subfolder instead of a subdomain root, the `<base href>` needs to be updated to ensure all links point to their proper targets. This can be done by setting `LAMINAR_BASE_URL` in `/etc/laminar.conf`.
+
+See [this example configuration file for nginx](https://github.com/ohwgiles/laminar/blob/master/examples/nginx-ssl-reverse-proxy.conf).
 
 ## More configuration options
 
@@ -196,6 +200,8 @@ This is what [git hooks](https://git-scm.com/book/gr/v2/Customizing-Git-Git-Hook
 LAMINAR_REASON="Push to git repository" laminarc queue example-build
 ```
 
+For a more advanced example, see [examples/git-post-receive-hook-notes](https://github.com/ohwgiles/laminar/blob/master/examples/git-post-receive-hook-notes)
+
 What if your git server is not the same machine as the laminar instance?
 
 ## Triggering on a remote laminar instance
@@ -240,7 +246,7 @@ Additionally, the raw log output may be fetched over a plain HTTP request to htt
 
 # Job chains
 
-A typical pipeline may involve several steps, such as build, test and deploy. Depending on the project, these may be broken up into seperate laminar jobs for maximal flexibility.
+A typical pipeline may involve several steps, such as build, test and deploy. Depending on the project, these may be broken up into separate laminar jobs for maximal flexibility.
 
 The preferred way to accomplish this in Laminar is to use the same method as [regular run triggering](#Triggering-a-run), that is, calling `laminarc` directly in your `example.run` scripts.
 
@@ -366,7 +372,7 @@ fi
 
 Of course, you can make this as pretty as you like. A [helper script](#Helper-scripts) can be a good choice here.
 
-If you want to send to different addresses dependending on the job, replace `engineering@company.com` above with a variable, e.g. `$RECIPIENTS`, and set `RECIPIENTS=nora@company.com,joe@company.com` in `/var/lib/laminar/cfg/jobs/JOB.env`. See [Environment variables](#Environment-variables).
+If you want to send to different addresses depending on the job, replace `engineering@company.com` above with a variable, e.g. `$RECIPIENTS`, and set `RECIPIENTS=nora@company.com,joe@company.com` in `/var/lib/laminar/cfg/jobs/JOB.env`. See [Environment variables](#Environment-variables).
 
 You could also update the `$RECIPIENTS` variable dynamically based on the build itself. For example, if your run script accepts a parameter `$rev` which is a git commit id, as part of your job's `.after` script you could do the following:
 
@@ -375,7 +381,7 @@ author_email=$(git show -s --format='%ae' $rev)
 laminarc set RECIPIENTS $author_email
 ```
 
-See [notify-email-pretty.sh](https://github.com/ohwgiles/laminar/blob/master/examples/notify-email-pretty.sh) and [notify-email-text-log.sh](https://github.com/ohwgiles/laminar/blob/master/examples/notify-email-text-log.sh).
+See [examples/notify-email-pretty](https://github.com/ohwgiles/laminar/blob/master/examples/notify-email-pretty) and [examples/notify-email-text-log](https://github.com/ohwgiles/laminar/blob/master/examples/notify-email-text-log).
 
 ---
 
@@ -587,6 +593,8 @@ docker run --rm -ti -v $PWD:/root ubuntu /bin/bash -xe <<EOF
   ...
 EOF
 ```
+
+For more advanced usage, see [examples/docker-advanced](https://github.com/ohwgiles/laminar/blob/master/examples/docker-advanced)
 
 ---
 

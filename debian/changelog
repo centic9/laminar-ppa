@@ -1,3 +1,10 @@
+laminar (1.1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Update to Standards-Version 4.6.0
+
+ -- Ruben Pollan <meskio@sindominio.net>  Thu, 30 Sep 2021 13:13:31 +0200
+
 laminar (1.0-3) unstable; urgency=medium
 
   * Depend on libboost-dev instead of a concrete version, so it will build
