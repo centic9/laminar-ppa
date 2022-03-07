@@ -1,3 +1,9 @@
+laminar (1.1-1build1) jammy; urgency=medium
+
+  * No-change rebuild against libcapnp-0.8.0
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 07 Mar 2022 17:00:47 +0000
+
 laminar (1.1-1) unstable; urgency=medium
 
   * New upstream release.

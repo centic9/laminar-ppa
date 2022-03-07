@@ -1,7 +1,8 @@
 Source: laminar
 Section: devel
 Priority: optional
-Maintainer: Ruben Pollan <meskio@sindominio.net>
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: Ruben Pollan <meskio@sindominio.net>
 Build-Depends:
  capnproto (>= 0.7.0~),
  debhelper-compat (= 13),
