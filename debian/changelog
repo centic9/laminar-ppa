@@ -1,3 +1,10 @@
+laminar (1.1-1ubuntu0~ppa1) focal; urgency=medium
+
+  * Backport to Focal
+  * Revert to original Chart.js 2.7.2
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Fri, 09 Sep 2022 18:19:50 +0200
+
 laminar (1.1-1build1) jammy; urgency=medium
 
   * No-change rebuild against libcapnp-0.8.0
