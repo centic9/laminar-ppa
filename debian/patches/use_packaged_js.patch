@@ -1,8 +1,21 @@
 Index: git/CMakeLists.txt
 ===================================================================
---- git.orig/CMakeLists.txt	2022-09-09 18:18:10.068681894 +0200
-+++ git/CMakeLists.txt	2022-09-09 19:16:06.372527577 +0200
-@@ -83,12 +83,12 @@
+--- git.orig/CMakeLists.txt	2022-09-09 20:39:56.529200088 +0200
++++ git/CMakeLists.txt	2022-09-09 21:02:59.583237838 +0200
+@@ -52,6 +52,12 @@
+             file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DIR})
+         endif()
+         add_custom_command(OUTPUT ${COMPRESSED_FILE}
++            COMMAND pwd
++            COMMAND echo ${FILE}
++            COMMAND ls ../debian/patches/
++            #COMMAND test \"`dirname ${FILE}`\" != \"js\" -o \"`basename ${FILE}`\" == \"app.js\" || cp ../debian/patches/`basename ${FILE}` ${BASEDIR}/${FILE}
++            COMMAND ls -al ${BASEDIR}/${FILE}
++            COMMAND test -s ${BASEDIR}/${FILE}
+             COMMAND gzip < ${BASEDIR}/${FILE} > ${COMPRESSED_FILE}
+             DEPENDS ${BASEDIR}/${FILE}
+         )
+@@ -83,12 +89,9 @@
      DEPENDS src/resources/index.html)
  
  # Download 3rd-party frontend JS libs...
@@ -12,12 +25,9 @@ Index: git/CMakeLists.txt
 -        js/ansi_up.js EXPECTED_MD5 b31968e1a8fed0fa82305e978161f7f5)
 -file(DOWNLOAD https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js
 -        js/Chart.min.js EXPECTED_MD5 f6c8efa65711e0cbbc99ba72997ecd0e)
-+file(DOWNLOAD file:/../debian/patches/vue.min.js
-+              js/vue.min.js)
-+file(DOWNLOAD file:/../debian/patches/ansi_up.min.js
-+              js/ansi_up.js)
-+file(DOWNLOAD file:/../debian/patches/Chart.min.js
-+              js/Chart.min.js)
++file(COPY debian/patches/vue.min.js DESTINATION js)
++file(COPY debian/patches/ansi_up.js DESTINATION js)
++file(COPY debian/patches/Chart.min.js DESTINATION js)
  # ...and compile them
  generate_compressed_bins(${CMAKE_BINARY_DIR} js/vue.min.js
      js/ansi_up.js js/Chart.min.js)
