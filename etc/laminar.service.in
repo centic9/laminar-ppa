@@ -1,0 +1,12 @@
+[Unit]
+Description=Laminar continuous integration service
+After=network.target
+
+[Service]
+User=laminar
+EnvironmentFile=-/etc/laminar.conf
+ExecStart=@CMAKE_INSTALL_PREFIX@/sbin/laminard
+
+[Install]
+WantedBy=multi-user.target
+
