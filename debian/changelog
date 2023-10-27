@@ -1,3 +1,15 @@
+laminar (1.1-1build3) noble; urgency=medium
+
+  * Rebuild against new libcapnp-1.0.1.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Fri, 27 Oct 2023 12:30:52 +0200
+
+laminar (1.1-1build2) lunar; urgency=medium
+
+  * No-change rebuild against libcapnp-0.9.2
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 03 Feb 2023 16:21:05 +0000
+
 laminar (1.1-1build1) jammy; urgency=medium
 
   * No-change rebuild against libcapnp-0.8.0
