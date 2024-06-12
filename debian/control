@@ -1,18 +1,17 @@
 Source: laminar
 Section: devel
 Priority: optional
-Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
-XSBC-Original-Maintainer: Ruben Pollan <meskio@sindominio.net>
+Maintainer: Ruben Pollan <meskio@sindominio.net>
 Build-Depends:
  capnproto (>= 0.7.0~),
  debhelper-compat (= 13),
+ dh-sequence-installsysusers,
  libboost-dev,
  zlib1g-dev,
  libcapnp-dev (>= 0.7.0~),
  rapidjson-dev,
  bash-completion,
  cmake,
- dh-sysuser,
  libjs-vue,
  libjs-chart.js,
  libjs-ansi-up,

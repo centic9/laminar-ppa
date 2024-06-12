@@ -1,20 +1,11 @@
-laminar (1.1-1build3) noble; urgency=medium
+laminar (1.1-1.1) unstable; urgency=medium
 
-  * Rebuild against new libcapnp-1.0.1.
+  * Non-maintainer upload.
 
- -- Gianfranco Costamagna <locutusofborg@debian.org>  Fri, 27 Oct 2023 12:30:52 +0200
+  [ Helmut Grohne ]
+  * Move from dh-sysuser to standard dh_installsysusers (Closes: #1071525)
 
-laminar (1.1-1build2) lunar; urgency=medium
-
-  * No-change rebuild against libcapnp-0.9.2
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 03 Feb 2023 16:21:05 +0000
-
-laminar (1.1-1build1) jammy; urgency=medium
-
-  * No-change rebuild against libcapnp-0.8.0
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 07 Mar 2022 17:00:47 +0000
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 12 Jun 2024 20:37:43 +0200
 
 laminar (1.1-1) unstable; urgency=medium
 
