@@ -1,3 +1,9 @@
+laminar (1.1-1.1ubuntu0~ppa1) noble; urgency=medium
+
+  * Backport to Noble
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Fri, 11 Oct 2024 12:22:17 +0200
+
 laminar (1.1-1.1) unstable; urgency=medium
 
   * Non-maintainer upload.
