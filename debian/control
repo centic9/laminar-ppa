@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Ruben Pollan <meskio@sindominio.net>
 Build-Depends:
  capnproto (>= 0.7.0~),
- debhelper-compat (= 13),
+ debhelper-compat (= 12),
  dh-sequence-installsysusers,
  libboost-dev,
  zlib1g-dev,

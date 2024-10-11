@@ -1,1 +1,5 @@
-0000-Patch-build-system-to-use-JS-libraries-from-Debian-p.patch
+# disable as Ubuntu/Debian contain version 3.x of Chart.js which is incompatible
+# and thus a migration of laminar is needed to make it work with this
+# See https://github.com/ohwgiles/laminar/issues/175
+# 0000-Patch-build-system-to-use-JS-libraries-from-Debian-p.patch
+use_packaged_js.patch

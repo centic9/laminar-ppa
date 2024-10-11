@@ -6,6 +6,40 @@ laminar (1.1-1.1) unstable; urgency=medium
   * Move from dh-sysuser to standard dh_installsysusers (Closes: #1071525)
 
  -- Chris Hofstaedtler <zeha@debian.org>  Wed, 12 Jun 2024 20:37:43 +0200
+ 
+laminar (1.1-1ubuntu0~ppa4) jammy; urgency=medium
+
+  * Upload for Jammy
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Sat, 17 Sep 2022 14:25:07 +0200
+
+laminar (1.1-1ubuntu0~ppa3) focal; urgency=medium
+
+  * Fix copying js-files from debian/patches
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Fri, 09 Sep 2022 21:03:51 +0200
+
+laminar (1.1-1ubuntu0~ppa2) focal; urgency=medium
+
+  * Include js-files locally as downloading is not possible.
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Fri, 09 Sep 2022 19:18:21 +0200
+
+laminar (1.1-1ubuntu0~ppa1) focal; urgency=medium
+
+  * Backport to Focal
+  * Revert to original Chart.js 2.7.2
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Fri, 09 Sep 2022 18:19:50 +0200
+
+laminar (1.1-1build1) jammy; urgency=medium
+
+  * Non-maintainer upload.
+
+  [ Helmut Grohne ]
+  * Move from dh-sysuser to standard dh_installsysusers (Closes: #1071525)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 12 Jun 2024 20:37:43 +0200
 
 laminar (1.1-1) unstable; urgency=medium
 
